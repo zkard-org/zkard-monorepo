@@ -1,0 +1,43 @@
+version: "3.8"
+services:
+  postgres:
+    container_name: postgres
+    image: postgres:15
+    restart: always
+    environment:
+      DATABASE_HOST: localhost
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: lawallet-extension
+    ports:
+      - 5432:5432
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U root -h localhost -d lawallet-extension"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 360s
+  migrate:
+    image: node:18-alpine3.16
+    environment:
+      DATABASE_URL: postgresql://root:root@postgres/lawalte-extension
+    entrypoint: [ 'sh', '-c', 'cd code && npm install --no-save --quiet prisma@5.12.0 && npx prisma migrate deploy']
+    volumes:
+      - ./prisma:/code/prisma
+    depends_on:
+      postgres:
+        condition: service_healthy
+  app:
+    build:
+      context: ./
+      target: runner
+    ports:
+      - 3000:3000
+    env_file:
+      - ./.env
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: "postgresql://root:root@postgres/lawallet-extension"
+    depends_on:
+      - postgres
+    restart: always

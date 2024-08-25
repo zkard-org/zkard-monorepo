@@ -1,20 +1,94 @@
 {
-  "name": "card",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "name": "zksync-ntag424",
+  "version": "0.1.0",
+  "description": "zksync-ntag424",
+  "main": "dist/index.mjs",
+  "module": "dist/index.mjs",
+  "type": "module",
+  "types": "dist/index.d.ts",
+  "files": [
+    "./dist/index.mjs",
+    "./dist/index.mjs.map"
+  ],
+  "exports": {
+    "default": "./dist/index.mjs"
+  },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "postinstall": "prisma generate",
+    "test": "DOTENV_CONFIG_PATH=.env.test jest --runInBand",
+    "test:v": "DEBUG='*,-babel jest --verbose' DOTENV_CONFIG_PATH=.env.test jest --runInBand",
+    "test:watch": "DOTENV_CONFIG_PATH=.env.test jest --watch",
+    "dev": "concurrently \"pnpm run build:watch\" \"pnpm run dev:watch\"",
+    "dev:watch": "nodemon --watch \"dist/**/*\" -w .env -r dotenv/config -e mjs ./dist/index.js",
+    "build": "node ./build.mjs && pnpm run build:types",
+    "build:prod": "node ./build.mjs",
+    "build:types": "tsc --build --verbose ./tsconfig.build.json",
+    "build:watch": "node ./build.mjs --watch",
+    "start": "NODE_ENV=production node dist/index.js",
+    "clean": "rm -rf dist .coverage",
+    "reset": "pnpm clean && rm -rf node_modules && rm -f pnpm-lock.yaml",
+    "lint": "eslint src tests --fix; prisma validate",
+    "prettier": "prettier src tests --no-error-on-unmatched-pattern --write; prisma format",
+    "prisma:migrate": "prisma migrate dev"
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "author": {
+    "name": "Juan José Ramírez"
+  },
+  "license": "MIT",
   "dependencies": {
-    "express": "^4.19.2"
+    "@lawallet/module": "~0.8.3",
+    "@nostr-dev-kit/ndk": "^2.8.2",
+    "@prisma/client": "5.9.1",
+    "aes-cmac": "^3.0.2",
+    "debug": "^4.3.4",
+    "dotenv": "^16.4.5",
+    "ethers": "6",
+    "express": "^4.19.2",
+    "fs": "0.0.1-security",
+    "glob": "^10.3.15",
+    "nostr-tools": "npm:@lawallet/nostr-tools@^1.17.0",
+    "websocket-polyfill": "^0.0.3",
+    "ws": "^8.17.0",
+    "zksync-ethers": "^6.11.2"
   },
   "devDependencies": {
+    "@jest/globals": "^29.7.0",
+    "@types/debug": "^4.1.12",
     "@types/express": "^4.17.21",
-    "@types/node": "^20",
-    "typescript": "^5.5.4"
+    "@types/glob": "^8.1.0",
+    "@types/jest": "^29.5.12",
+    "@types/node": "^20.12.12",
+    "@types/supertest": "^6.0.2",
+    "@types/uuid": "^9.0.8",
+    "@types/ws": "^8.5.10",
+    "@typescript-eslint/eslint-plugin": "^6.21.0",
+    "@typescript-eslint/parser": "^6.21.0",
+    "chokidar": "^3.6.0",
+    "concurrently": "^8.2.2",
+    "esbuild": "^0.20.2",
+    "eslint": "^8.57.0",
+    "eslint-config-airbnb-typescript": "^17.1.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-import-resolver-typescript": "^3.6.1",
+    "eslint-plugin-import": "^2.29.1",
+    "eslint-plugin-jest": "^27.9.0",
+    "jest": "^29.7.0",
+    "nodemon": "^3.1.0",
+    "prettier": "^3.2.5",
+    "prisma": "^5.14.0",
+    "supertest": "^6.3.4",
+    "ts-jest": "^29.1.2",
+    "ts-jest-mock-import-meta": "^1.2.0",
+    "tsc-alias": "^1.8.10",
+    "typescript": "^5.4.5"
+  },
+  "overrides": {
+    "nostr-tools": "npm:@lawallet/nostr-tools"
+  },
+  "pnpm": {
+    "overrides": {
+      "nostr-tools": "npm:@lawallet/nostr-tools"
+    }
   }
 }

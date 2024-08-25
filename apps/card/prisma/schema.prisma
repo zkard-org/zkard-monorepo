@@ -1,0 +1,19 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgres"
+  url      = env("DATABASE_URL")
+}
+
+model Ntag424 {
+  cid    String  @id
+  k0     String
+  k1     String
+  k2     String
+  k3     String
+  k4     String
+  ctr    Int     
+  pubKey String 
+}

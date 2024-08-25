@@ -70,7 +70,7 @@ pnpm run dev --filter=checkout
 ```
 
 The apps will be available at:
-- Emissor: [http://localhost:3000](http://localhost:3000)
+- Card: [http://localhost:3000](http://localhost:3000)
 - Checkout: [http://localhost:3001](http://localhost:3001)
 
 ## Building the Project

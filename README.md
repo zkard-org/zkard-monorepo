@@ -2,6 +2,27 @@
 
 ZKard is an innovative payment system built on zkSync, enabling fast, permissionless, and anonymous payments. This monorepo contains both the card emissor and the frontend code for the checkout process.
 
+```mermaid
+graph TD
+    A[Start: NFC Card Scanned] --> B{Check Operation Type}
+    B -->|Pay| C[Validate Associated Account Balance]
+    B -->|Recharge| H[Get Recharge Amount]
+    
+    C -->|Valid Balance| D[Process Payment]
+    C -->|Insufficient Balance| E[Display Error: Insufficient Funds]
+    
+    D --> F[Update Account Balance]
+    F --> G[Complete Transaction]
+    
+    H --> I[Send Funds to Associated Wallet]
+    I --> J[Update Account Balance]
+    J --> K[Complete Recharge]
+    
+    E --> L[End: Transaction Failed]
+    G --> M[End: Payment Successful]
+    K --> N[End: Recharge Successful]
+```
+
 ## Project Overview
 
 ZKard leverages blockchain technology to provide a seamless and secure payment experience:

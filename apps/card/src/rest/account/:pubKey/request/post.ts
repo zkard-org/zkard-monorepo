@@ -1,28 +1,32 @@
-import { utils, Wallet, Provider, EIP712Signer, types } from "zksync-ethers";
+import { utils, Wallet, Provider, EIP712Signer, types } from 'zksync-ethers';
 
 import { DefaultContext, ExtendedRequest } from '@lawallet/module';
 import type { Response } from 'express';
 import { Debugger } from 'debug';
-import * as ethers from "ethers";
+import * as ethers from 'ethers';
 
 import { logger, requiredEnvVar } from '@lawallet/module';
 
-import { retrieveNtag424FromPC, } from '@lib/ntag424';
+import { retrieveNtag424FromPC } from '@lib/ntag424';
 
 const log: Debugger = logger.extend('rest:account:pubKey:request:post');
 const debug: Debugger = log.extend('debug');
+const error: Debugger = log.extend('error');
 
 const ACCOUNT_OWNER_PRIVKEY = requiredEnvVar('ACCOUNT_OWNER_PRIVKEY');
 const PAYMASTER_ADDRESS = requiredEnvVar('PAYMASTER_ADDRESS');
 const PROVIDER_URL = requiredEnvVar('PROVIDER_URL');
 
+const USDC_DECIMALS = 6;
+
 async function handler<Context extends DefaultContext>(
   req: ExtendedRequest<Context>,
   res: Response,
 ) {
-  console.dir(req.query);
-  console.dir(req.params);
-  console.dir(req.body);
+  log('New request');
+  debug('%O', req.params);
+  debug('%O', req.body);
+
   // 1. check query params
   const ntag424Res: { ok: any } | { error: string } =
     await retrieveNtag424FromPC(
@@ -44,18 +48,17 @@ async function handler<Context extends DefaultContext>(
   const ntag424 = ntag424Res.ok;
 
   const provider = new Provider(PROVIDER_URL);
-  const balance = await provider.getBalance(ntag424.pubKey, "latest", req.body.token);
-  console.dir(balance)
+  const balance = await provider.getBalance(
+    ntag424.pubKey,
+    'latest',
+    req.body.token,
+  );
 
-
-  const amount = ethers.parseUnits(req.body.amount, 6);
+  const amount = ethers.parseUnits(req.body.amount, USDC_DECIMALS);
   if (balance < amount) {
-     res
-      .status(400)
-      .json({
-        status:'ERROR',
-        reason:`Not enough funds, asked for ${amount}, have ${balance}`
-        });
+    const reason = `Not enough funds, asked for ${amount}, have ${balance}`;
+    debug(reason);
+    res.status(400).json({ status: 'ERROR', reason });
     return;
   }
 
@@ -63,11 +66,11 @@ async function handler<Context extends DefaultContext>(
     token: req.body.token,
     amount,
     from: ntag424.pubKey,
-    to: req.body.address, // account that will receive the ETH transfer
+    to: req.body.address, // account that will receive the transfer
   });
 
   const paymasterParams = utils.getPaymasterParams(PAYMASTER_ADDRESS, {
-    type: "General",
+    type: 'General',
     innerInput: new Uint8Array(),
   });
   tx = {
@@ -86,22 +89,28 @@ async function handler<Context extends DefaultContext>(
   const signedTxHash = EIP712Signer.getSignedDigest(tx);
 
   const owner = new Wallet(ACCOUNT_OWNER_PRIVKEY, provider);
-  const signature = ethers.concat([ethers.Signature.from(owner.signingKey.sign(signedTxHash)).serialized]);
+  const signature = ethers.concat([
+    ethers.Signature.from(owner.signingKey.sign(signedTxHash)).serialized,
+  ]);
 
   tx.customData = {
     ...tx.customData,
     customSignature: signature,
   };
 
-
-  console.log("Sending transfer from smart contract account");
+  log('Sending transfer from smart contract account');
   try {
-    const sentTx = await provider.broadcastTransaction(types.Transaction.from(tx).serialized);
+    const sentTx = await provider.broadcastTransaction(
+      types.Transaction.from(tx).serialized,
+    );
     await sentTx.wait();
-    console.dir(sentTx);
-    res.status(200).json({ txId: sentTx.hash }).send();
+    const txHash = sentTx.hash;
+    log('Transaction sent successfully: %O', txHash);
+    debug('%O', sentTx);
+    res.status(200).json({ txId: txHash }).send();
   } catch (e) {
-    res.status(500).json({status: 'ERROR', reason: e.toString()});
+    error('Error transferring: %O', e);
+    res.status(500).json({ status: 'ERROR', reason: e.toString() });
   }
 }
 

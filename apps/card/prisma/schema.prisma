@@ -8,12 +8,12 @@ datasource db {
 }
 
 model Ntag424 {
-  cid    String  @id
+  cid    String @id
   k0     String
   k1     String
   k2     String
   k3     String
   k4     String
-  ctr    Int     
-  pubKey String 
+  ctr    Int
+  pubKey String
 }

@@ -8,14 +8,7 @@ import { logger, requiredEnvVar } from '@lawallet/module';
 import { AesCmac } from 'aes-cmac';
 import { Cipher, createCipheriv, createDecipheriv, randomBytes } from 'crypto';
 
-import {
-  Card,
-  Delegation,
-  Ntag424,
-  PaymentRequest,
-  Prisma,
-  PrismaClient,
-} from '@prisma/client';
+import { Ntag424, PrismaClient } from '@prisma/client';
 
 const log: Debugger = logger.extend('lib:ntag424');
 const debug: Debugger = log.extend('debug');
@@ -216,4 +209,3 @@ export const generatePC = async (
       .toUpperCase(),
   };
 };
-

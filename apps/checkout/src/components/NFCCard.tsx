@@ -1,18 +1,19 @@
 "use client"
 
-import { useContext, useState } from "react"
+import { useContext } from "react"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { ConnectWallet, WarningAlert, ConnectedAlert } from "@/components/CardComponents"
 import { CardContext } from "@/contexts/CardContext"
-import { NFCContext } from "@/contexts/NFCContext"
 import OfflineAlert from './OfflineAlerts'
 import UpdateAlert from './UpdateAlert'
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Smartphone, ArrowUpCircle, Loader2, AlertCircle } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { AlertCircle } from "lucide-react"
+import BalanceTab from "./BalanceTab"
+import PayTab from "./PayTab"
+import RechargeTab from "./RechargeTab"
+import useNFC from "../hooks/useNFC"
 
 export default function NFCCard() {
   const { 
@@ -20,7 +21,7 @@ export default function NFCCard() {
     isConnected, 
     showWarning, 
     isProcessing, 
-    paymentAmount, 
+    paymentAmount,
     rechargeAmount,
     address,
     handleConnectWallet,
@@ -30,32 +31,8 @@ export default function NFCCard() {
     setPaymentAmount,
     setRechargeAmount
   } = useContext(CardContext)
-  const { isAvailable, isEnabled, requestPermission, subscribe } = useContext(NFCContext)
-  const [nfcError, setNfcError] = useState<string | null>(null)
 
-  const handleNFCPayment = async () => {
-    setNfcError(null)
-    if (!isAvailable) {
-      setNfcError("NFC is not supported on this device.")
-      return
-    }
-
-    if (!isEnabled) {
-      const permissionGranted = await requestPermission()
-      if (!permissionGranted) {
-        setNfcError("NFC permission was not granted. Please enable NFC in your device settings.")
-        return
-      }
-    }
-
-    try {
-      const { p, c } = await subscribe()
-      await handlePayment(p, c)
-    } catch (error) {
-      console.error(error)
-      setNfcError("Error reading NFC tag. Please try again.")
-    }
-  }
+  const { handleNFCPayment, nfcError } = useNFC(handlePayment)
 
   return (
     <Card className="w-full max-w-md bg-[#03015b] text-white border-[#2d78b9]">
@@ -93,76 +70,25 @@ export default function NFCCard() {
             <TabsTrigger value="recharge" className="text-white data-[state=active]:bg-[#2d78b9]">Recharge</TabsTrigger>
           </TabsList>
           <TabsContent value="balance">
-            <div className="text-center">
-              <h3 className="text-2xl font-bold mt-4 text-[#2d78b9]">Current Balance</h3>
-              <p className="text-4xl font-bold text-[#ffffff] mt-2">${parseFloat(balance).toFixed(2)} USDC</p>
-              {address && <p className="mt-2 text-sm">Address: {address}</p>}
-            </div>
+            <BalanceTab balance={balance} address={address} />
           </TabsContent>
           <TabsContent value="pay">
-            <div className="space-y-4">
-              <div className="text-center">
-                <Smartphone className="h-16 w-16 mx-auto text-[#2d78b9]" />
-                <p className="mt-2 text-[#ffffff]">Enter amount and tap your NFC card to pay</p>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="payAmount" className="text-[#ffffff]">Amount to Pay (USDC)</Label>
-                <Input 
-                  id="payAmount" 
-                  type="number" 
-                  placeholder="Enter amount" 
-                  className="bg-[#010f3b] text-white border-[#2d78b9]"
-                  value={paymentAmount}
-                  onChange={(e) => setPaymentAmount(e.target.value)}
-                />
-              </div>
-              <Button 
-                className="w-full bg-[#2d78b9] text-white hover:bg-[#2d78b9]/80" 
-                onClick={handleNFCPayment} 
-                disabled={isProcessing || !isConnected || !paymentAmount}
-              >
-                {isProcessing ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Processing...
-                  </>
-                ) : (
-                  `Pay ${paymentAmount ? `$${paymentAmount}` : ''} USDC`
-                )}
-              </Button>
-            </div>
+            <PayTab 
+              paymentAmount={paymentAmount}
+              setPaymentAmount={setPaymentAmount}
+              handleNFCPayment={handleNFCPayment}
+              isProcessing={isProcessing}
+              isConnected={isConnected}
+            />
           </TabsContent>
           <TabsContent value="recharge">
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="rechargeAmount" className="text-[#ffffff]">Amount to Recharge (USDC)</Label>
-                <Input 
-                  id="rechargeAmount" 
-                  type="number" 
-                  placeholder="Enter amount" 
-                  className="bg-[#010f3b] text-white border-[#2d78b9]"
-                  value={rechargeAmount}
-                  onChange={(e) => setRechargeAmount(e.target.value)}
-                />
-              </div>
-              <Button 
-                className="w-full bg-[#2d78b9] text-white hover:bg-[#2d78b9]/80" 
-                onClick={handleRecharge} 
-                disabled={isProcessing || !isConnected || !rechargeAmount}
-              >
-                {isProcessing ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Processing...
-                  </>
-                ) : (
-                  <>
-                    <ArrowUpCircle className="mr-2 h-4 w-4" />
-                    {`Recharge ${rechargeAmount ? `$${rechargeAmount}` : ''} USDC`}
-                  </>
-                )}
-              </Button>
-            </div>
+            <RechargeTab 
+              rechargeAmount={rechargeAmount}
+              setRechargeAmount={setRechargeAmount}
+              //handleRecharge={handleRecharge}
+              isProcessing={isProcessing}
+              isConnected={isConnected}
+            />
           </TabsContent>
         </Tabs>
       </CardContent>

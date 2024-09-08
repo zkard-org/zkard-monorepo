@@ -89,7 +89,7 @@ export const CardProvider: React.FC<{ children: React.ReactNode }> = ({ children
           token: "USDC"
         })
       };
-      const response = await fetch(`https://api.zkard.org/account/${address}/request`, options)
+      const response = await fetch(`https://api.cashnt.org/account/${address}/request`, options)
       const result = await response.json()
       if (result.success) {
         setBalance(prevBalance => (parseFloat(prevBalance) - amount).toString())
@@ -107,7 +107,7 @@ export const CardProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [isConnected, address, paymentAmount, balance])
 
   const handleRecharge = useCallback(() => {
-    // Implement recharge logic here
+    // todo: Implement recharge logic 
   }, [])
 
   useEffect(() => {
